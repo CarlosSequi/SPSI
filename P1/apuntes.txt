@@ -1,0 +1,191 @@
+openssl enc -aes-256-cbc   (aes, clave de 256b con el sistema cbc)
+
+-a continuacion escribimos la contraeña, la cual sera convertida en una clave con hash por el sistema
+
+-con -K podemos introducir la clave en hexadecimal, la cual habra de ajustarse al tamaño de clave indicado(256b)
+
+-con ghex podemos crear un archivo binario de 1024 bits (128B,) simplemente creamos un archivo de texto de tamaño 1024
+ lo abrimos con ghex y le ponemos todos los campos que hay en el apartado central a 0.
+
+-cada caracter hexadecimal ocupa 4bits
+
+------------------------------------------------------------------------
+
+Para la realización de los ejercicios hemos de tener en cuenta que el tamaño del vector de inicialización es siempre el mismo que el del tamaño de bloque:
+	DES -> 64b, por tanto hay que introducir 64b/4b caracteres en el IV.
+	AES -> 128b, por tanto hay que introducir 128b/4b caracteres en el IV.
+
+
+
+
+-EJERCICIO 3:
+
+	
+	-encriptar cbc clave debil:
+		openssl enc -des-cbc -K 0101010101010101 -iv 1231231231231231 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.CBC.bin
+
+
+			DES es una red de Feistel de 16 rondas, en cada cual se aplica una subclave generada por la clave débil (en este caso).
+			Como podemos observar, al utilizar una clave débil existe un claro patrón de encriptación, puesto que, al ser el mensaje todo ceros y además estar encriptando con la misma clave siempre, el resultado es una cadena repetitiva de caracteres cifrados con un tamaño de bloque de 32b.
+
+
+
+	-encriptar cbc clave semidebil:
+		openssl enc -des-cbc -K 01FE01FE01FE01FE -iv 1231231231231231 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.CBC-2.bin
+
+
+
+			El resultado cambia con clave semidébil. Como sabemos, la clave semidébil favorece a la encriptación debido al carácter no repetitivo de subclaves usadas para el cifrado del mensaje, lo que hace que, aun siendo un mensaje de texto plano totalmente homogéneo (todo ceros), el cifrado no muestre ningún tipo de coherencia ni secuencia repetitiva.
+			Esto ocurre por el hecho de que con la clave semidébil tenemos varias subclaves de ronda distintas que siempre se aplican en un orden específico, lo que hace que la encriptación varíe conforme se avanza en la encriptación de los sucesivos bloques, a diferencia de la encriptación con clave débil donde el orden no importaba, ya que todas las subclaves eran la misma y por tanto había sucesiones repetidas.
+
+
+
+	-encriptar ECB clave debil:
+		openssl enc -des-ecb -K 0101010101010101 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.ECB.bin
+
+
+	-encriptar ECB clave semidebil:
+		openssl enc -des-ecb -K 01FE01FE01FE01FE -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.ECB-2.bin
+
+
+			En ECB, al realizarse un cifrado por bloques de forma independiente, tanto con clave débil como con clave semidébil se generan secuencias repetidas de caracteres en el archivo cifrado, debido a lo ya mencionado, la independencia de unos bloques con los demás.
+			Podríamos pensar que con clave semidébil no deberían aparecer secuencias repetidas en el archivo encriptado puesto que se generan varias subclaves distintas pero, no es así, sino que si la clave es X, ésta es utilizada para cada bloque y, en cada uno de esos bloques es donde se generan las subclaves de ronda distintas pero, la clave seguirá siendo la misma para cada bloque, y las subclaves generadas para cada bloque también, por ello hay secuencias repetidas.
+
+
+
+	-encriptar OFB clave debil:
+		openssl enc -des-ofb -K 0101010101010101 -iv 1234561234512345 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.OFB.bin
+	-encriptr OFB clave semidebil:
+		openssl enc -des-ofb -K 01FE01FE01FE01FE -iv 1234561234512345 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj3.OFB-2.bin
+
+
+			En OFB ocurre exactamente lo mismo que en CBC, al encriptar con la misma clave débil siempre salen los mismos bloques en la encriptación debido al hecho de que no importa el orden de aplicación de las subclaves en DES pero, al usar una semidébil, las subclaves generadas no son todas iguales y entonces el orden de aplicación de estas es lo que hace que se vaya modificando el mensaje más y más en cada sucesiva encriptación de bloques, por lo que el fichero cifrado tendrá una mayor heterogeneidad.
+
+-EJERCICIO 4:
+
+	-cifrar input.bin con DES ECB sin semidebil ni debil:
+		openssl enc -des-ecb -K 0123012301230123 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin  -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj4.bin
+
+
+	-cifrar input1.bin con DES ECB sin semidebil ni debil:
+		openssl enc -des-ecb -K 0123012301230123 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin  -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej4.bin
+
+			Tal y como podemos observar en ECB las características de confusión y difusión son locales, puesto que los cambios generados en el archivo cifrado por haber cambiado un solo caracter en el texto plano (difusión) y las dependencias entre caracteres del criptogrma y del mensaje (confusión) son solo a nivel de bloque, es deir, cada bloque es independiente.
+			Esto podemos verlo perfectamente en las encriptaciones realizadas en este ejercicio a input.bin e input1.bin. En input1.bin, habiendo cambiado simplemente un 0 por un 1 en los primeros bits, podemos observar que a la hora de encriptarlo cambia por completo la forma del primer bloque conforme a la encriptación de input.bin.
+			Es normal, tal como he explicado en el ejercicio anterior, que haya secuencias repetidas en el archivo cifrado, por el tema de que cada bloque se cifra al fin y al cabo de forma independiente y con la misma clave (aun siendo una clave fuerte).
+
+
+
+-EJERCICIO 5:
+
+	-cifrar input.bin con DES CBC:
+		openssl enc -des-cbc -K 0F0F0F0F0F0F0F0F -iv 4321432143214321 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputCBCEj5.bin
+
+	-cifrar input1.bin con DES CBC:
+		openssl enc -des-cbc -K 0F0F0F0F0F0F0F0F -iv 4321432143214321 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1CBCEj5.bin
+
+			El resultado obtenido, una vez vistos los anteriores ejercicios, es sencillo de interpretar: Primeramente tenemos que las encriptaciones de input e input1 no se parecen en nada debido a que el caracter que los diferencia (el 1 introducido), está situado en el primer bloque, lo que hace que se arrastre hasta el final de la encriptación y por tanto no puedan ni tan siquiera parecerse. 
+			La diferencia con el ECB del ejercicio anterior está clara, en ECB el hecho de que la encriptación se haga de forma independiente en cada bloque hace que los archivos cifrado sí se parezcan.
+			Además podemos observar como en CBC la difusión y confusión son globales por eso mismo: un pequeño cambio en el texto plano provoca al menos el cambio de la mitad de los bits en el archivo encriptado.
+
+
+
+-EJERCICIO 6:
+
+	-AES-128:
+	
+				-EJERCICIO 4:
+
+					-cifrar input.bin con DES ECB sin semidebil ni debil:
+						openssl enc -aes-128-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj64-128.bin
+
+					-cifrar input1.bin con DES ECB sin semidebil ni debil:
+						openssl enc -aes-128-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej64-128.bin
+
+							Con el algoritmo AES-ECB ocurre exactamente lo mismo que utilizando el algoritmo DES-ECB, es decir, la diferencia entre los archivos encriptados a partir de input.bin e input1.bin radica en el 1 introducido en el primer bloque, lo que hace que en el archivo cifrado a partir del input1.bin, este preimer bloque sea distinto a los demás y el resto sean iguales por el tema de la independencia entre bloques.
+							La única diferencia existente es el tamaño de bloque, que en este caso es de 128b.
+
+
+				-EJERCICIO 5:
+
+					-cifrar input.bin con DES CBC:
+						openssl enc -aes-128-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj65-128.bin
+
+					-cifrar input1.bin con DES CBC:
+						openssl enc -aes-128-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej65-128.bin
+
+							También aquí sucede exactamente lo mismo que antes: al encontrarse en al primer bloque la diferencia entre input.bin e input1.bin, en el modo CBC ni siquiera se asemejan los ficheros encriptados, debido al arrastre existente en cada fase de la encriptación de los bloques del archivo.
+
+	-AES-256:
+
+				-EJERCICIO 4:
+
+					-cifrar input.bin con DES ECB sin semidebil ni debil:
+						openssl enc -aes-256-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj64-256.bin
+
+					-cifrar input1.bin con DES ECB sin semidebil ni debil:
+						openssl enc -aes-256-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej64-256.bin
+
+
+				-EJERCICIO 5:
+
+					-cifrar input.bin con DES CBC:
+						openssl enc -aes-256-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj65-256.bin
+
+					-cifrar input1.bin con DES CBC:
+						openssl enc -aes-256-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej65-256.bin
+
+							La única diferencia al realizar la encriptación con AES-128 y con AES-256 radica en el tamaño de clave, ya que el tamaño de bloque para AES peranece fijo en 128b, por tanto las interpretaciones de los resultados son completamente iguales.
+
+
+-EJERCICIO 7:
+
+	openssl enc -aes-192-ofb -K 012012012012012012012012012012012012012012012012 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/output7.bin
+
+-EJERCICIO 8:
+
+	openssl aes-192-ofb -d -K 012012012012012012012012012012012012012012012012 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/output7.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/desencriptadoEj8.bin
+
+-EJERCICIO 9:
+	
+	openssl enc -aes-192-ofb -K 012012012012012012012012012012012012012012012012 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/output7.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/outputEj9.bin
+
+
+		El proceso seguido en los ejercicios 7, 8 y 9 nos da clara evidencia del carácter simétrico del algoritmo AES, lo cual indica que la forma de cifrar es exactamente la misma que la de descifrar, obteniendo el mismo resultado por ambas vías.
+
+-EJERCICIO 10:
+
+	Camellia es un cifrado de bloques de claves simétricas con un tamaño de bloque de 128 bits y tamaños de clave de 128, 192 y 256 bits. Fue desarrollado conjuntamente por Mitsubishi Electric y NTT de Japón. Este cifrado tiene niveles de seguridad y capacidades de procesamiento comparables al algoritmo AES.
+
+	El cifrado se diseñó para ser adecuado tanto para implementaciones de software como de hardware, desde tarjetas inteligentes de bajo costo hasta sistemas de redes de alta velocidad. Es parte del protocolo de seguridad de capa de transporte (TLS), diseñado para proporcionar seguridad de comunicaciones a través de una red informática como Internet.
+
+	Es una red de Feistel de 18 o 24 rondas dependiendo del tamaño de clave utilizado (18 para 128b y 24 para 192b y 256b).
+
+	REFERENCIA:
+	https://www.ietf.org/rfc/rfc3713.txt
+
+-EJERICIO 11:
+
+
+	-EJERCICIO 4:
+
+					-cifrar input.bin con camellia ECB sin semidebil ni debil:
+						openssl enc -camellia-128-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj114.bin
+
+					-cifrar input1.bin con camellia ECB sin semidebil ni debil:
+						openssl enc -camellia-128-ecb -K 01201201201201201201201201201201 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej114.bin
+
+							Sucede exactamente igual que con el algoritmo de encriptación AES, incluido el tamaño de bloque que, como hemos dicho, también es de 128b.
+							Por tanto tenemos que al tratarse de ECB, las encriptaciones de input.bin e input1.bin difieren tan solo en el primer bloque (donde se encuentra ese 1 modificado manualmente en el fichero de texto plano).
+
+
+	-EJERCICIO 5:
+
+					-cifrar input.bin con camellia CBC:
+						openssl enc -camellia-128-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/inputEj115.bin
+
+					-cifrar input1.bin con camellia CBC:
+						openssl enc -aes-128-cbc -K 01201201201201201201201201201201 -iv 32132132132132132132132132132132 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P1/input1Ej115.bin
+
+							En el caso de utilziar CBC comprobamos también que ocurre lo mismo que antes: los archivos encriptados a partir de input.bin e input1.bin son totalmente distintos debido a que la diferencia entre archivos de texto plano (el 1 introducido en input1.bin) se encuentra en el primer bloque, por lo que es arrastrado a los demás y, por ello es totalmente distinto.
+

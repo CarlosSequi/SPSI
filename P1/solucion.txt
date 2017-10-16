@@ -1,0 +1,11 @@
+-ecb divide en bloques y le aplica el mismo encriptado DES a cada bloque, por eso se repite cada 8 bits
+ porque todo son ceros
+
+-difusion-un peuqeño cambio en un bit en texto en claro prduce un cambio en el bloque entero en el texto cifrado (podemos denotarlo justo en el cambio entre input e input1) (EN ECB)
+ en ecb hay confusion y difusiion local porque cuando hacemos un cambio en texto en plano, ese cambio se hace solo en un bloque, de forma local, no en todos los bloques. Esto es una desventaja, lo suyo es que cambiando un solo bien del teto plano, cambie la mitad mas o menos de los bits del texto cifrado
+
+-cbc debil se repite por bloques como en ecb porque se esta haciendo todo con la misma clave (por ser debil)
+ en semidebil no hay patrones de repeticion, por eso mismo, al ser la clave semidevil, se generan 16 subclaves las cuales son iguales dos a dos o 3 a 3 etc...
+ pero no son todas iguales como en cbc.
+
+ en cbc la confusion y difusion es global
