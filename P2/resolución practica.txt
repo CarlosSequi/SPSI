@@ -1,0 +1,89 @@
+1.Generar clave RSA de 768 bits sin protección por contraseña:
+	openssl genrsa -out CarlosRSAkey.pem 768
+
+2.Extraemos la clave privada en CarlosRSApriv.pem y la protegemos mediante AES-128 introduciéndole la contraseña 0123456789:
+	openssl rsa -in CarlosRSAkey.pem -out CarlosRSApriv.pem -outform PEM -aes128
+
+	----------MOSTRAR VALORES DEL ARCHIVO--------------
+
+3.Extraemos la clave publica de CarlosRSAkey.pem:
+	openssl rsa -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/CarlosRSAkey.pem -outform PEM -pubout -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/CarlosRSApub.pem
+
+	---------MOSTRAMOS LOS VALORES DEL ARCHIVO--------------
+
+5.Ciframos input.bin con clave publica
+	openssl rsautl -encrypt -pubin -inkey /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/CarlosRSApub.pem -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/inputEncriptado.bin
+
+	No está permitido cifrar input.bin ya que este tiene un tamaño de 1024 bits y la clave es de 768 bits, por tanto llegamos a la conclusión
+	de que no es posible cifrar un fichero que tiene mayor tamaño que la clave que se quiere utilizar para cifrar.
+	Esto es porque RSA es cifrado de flujo y no por bloques, por lo que necesita que la clave sea igual de grande que el mensaje.
+
+6.Diseñar cifrado hibrido
+	6.1: elijo el sistema simétrico DES CBC.
+	6.2: Generamos sessionkey.txt
+		-Para generar la cadena aleatoria utilizamos openssl rand, con un tamaño 8, ya que el tamaño de clave para DES es de 16 bytes:
+			openssl rand -hex 8 > /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/sessionkey.txt
+		-Establecemos el sistema simétrico utilizado en la segunda línea del fichero
+			echo "-des-cbc" >> /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/sessionkey.txt
+
+			--------MOSTRAR CONTENIDO SESSIONKEY-------
+
+	6.3: Ciframos sessionkey con la clave pública del receptor:
+		openssl rsautl -encrypt -pubin -inkey /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/CarlosRSApub.pem -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/sessionkey.txt -out sessionkeyEncrypted.txt
+
+		------MOSTRAR SESSIONKEY CIFRADO--------
+
+	6.4: Ciframos el mensaje con DES CBC con clave semidebil
+		openssl enc -des-cbc -pass file:/home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/sessionkey.txt -iv 1231231231231231 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/input.bin -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/inputEncriptado.bin
+
+		-----MOSTRAR INPUT.BIN CIFRADO--------
+
+7.
+
+		-Creamos el archivo sessionkey
+			-Para generar la cadena aleatoria utilizamos openssl rand, con un tamaño 8, ya que el tamaño de clave para DES es de 16 bytes:
+				openssl rand -hex 8 > /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkey.txt
+			-Establecemos el sistema simétrico utilizado en la segunda línea del fichero
+				echo "-des-cbc" >> /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkey.txt
+
+				--------MOSTRAR CONTENIDO SESSIONKEY-------
+
+		-Ciframos el mensaje con el criptosistema diseñado (DES-CBC)
+			openssl enc -des-cbc -pass file:/home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkey.txt -iv 1231231231231231 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/mensaje.txt -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/mensajeEncriptado.txt
+
+
+			-------MOSTRAR MENSAJE ENCRIPTADO Y SIN DESENCRIPTAR------
+
+		-Ciframos el sessionkey con la clave publica del receptor
+			openssl rsautl -encrypt -pubin -inkey /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/CarlosRSApub.pem -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkey.txt -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkeyEncrypted.txt
+
+			-------MOSTRAR SESSIONKEY ENCRIPTADO-----
+
+		-Enviamos al receptor esos dos archivos encriptados
+
+		-El receptor con su clave privada desencripta el sessionkey introduciendo la contraseña adecuada
+			openssl rsautl -decrypt -inkey /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/CarlosRSApriv.pem -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkeyEncrypted.txt -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkeyDesencriptado.txt
+
+
+			-----_MOSTRAR SESSIONKEY DESENCRIPTADO-------
+
+		-Una vez ha desencriptado el sessionkey se genera un archivo sessionkeyDesencriptado que usaremos para
+		 desencriptar el mensaje original.
+		 	openssl des-cbc -d -pass file:/home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/sessionkeyDesencriptado.txt -iv 1231231231231231 -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/mensajeEncriptado.txt -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej7/mensajeDesencriptado.txt
+
+
+		 	---------MOSTRAR MENSAJE ORIGINAL-------
+
+
+
+
+8.
+
+	-Generamos los parámetros
+		openssl ecparam -name brainpoolP192r1 -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/stdECparam.pem
+	-Generamos la clave para esos parámetros:
+		openssl ecparam -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/stdECparam.pem -genkey -noout -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/CarlosECkey.pem
+	-Sacamos la privada y la protegemos con la clave 0123456789
+		openssl ec -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/CarlosECkey.pem -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/CarlosECpriv.pem -outform PEM -des3
+	-Sacamos la publica
+		openssl ec -in /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/CarlosECkey.pem -pubout -out /home/carlos/Escritorio/ETSIIT/SPSI/Prácticas/P2/ej8/CarlosECpub.pem
